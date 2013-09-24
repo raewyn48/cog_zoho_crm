@@ -1,0 +1,4 @@
+name = Zoho CRM Integration
+description = Imports and exports Zoho CRM data to the Cognition site.
+core = 7.x
+package = Cognition Zoho
