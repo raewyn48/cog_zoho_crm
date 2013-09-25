@@ -46,9 +46,92 @@ function cog_zoho_crm_import() {
   $params['toIndex'] = 5;
   $params['newFormat'] = 2;
   
-  dpm($params);
+  foreach ($params as $field=>$val) {
+    $param_str_array[] = "$field=" . urlencode($val);
+  }
+  $param_str = join('&',$param_str_array);
   
-  $output = t('Here it is...');
-  return $output;
+  $ch = curl_init();
+  curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+  curl_setopt($ch, CURLOPT_URL, GETPRODUCTS);
+  curl_setopt($ch, CURLOPT_POST, true);
+  curl_setopt($ch, CURLOPT_POSTFIELDS, $param_str);
+
+  $data = curl_exec($ch);
+  $decoded = json_decode($data);
+
+  $products = $decoded->response->result->Products->row;
+  $first_row = true;
+  foreach ($products as $product) {
+    $no = $product->no;
+    $fields = $product->FL;
+    foreach ($fields as $field_obj) {
+      $field_name = $field_obj->val;
+      $content = $field_obj->content;
+      $products_array[$no][$field_name] = $content;
+      $table_rows[$no-1][] = $content;
+      
+      if ($first_row) {
+        $table_header[] = $field_name;
+      }
+    }
+    $first_row = false;
+
+  }
+  
+  $table_vars = array(
+    'header'=>$table_header,
+    'rows'=>$table_rows,
+    'attributes'=>array(),
+  );
+  
+  dpm($table_vars);
+  
+  return theme_table($table_vars);
 }
 
+/**
+ * Create a new page for a course
+ */
+
+function cog_zoho_crm_create_course_page($course_info) {
+  global $user;
+
+  $values = array(
+    'type' => 'workshop_course',		// ?? this might be changed
+    'uid' => $user->uid,
+    'status' => 1,
+    'comment' => 0,
+    'promote' => 0,
+  );
+  $entity = entity_create('node', $values);
+
+  $ewrapper = entity_metadata_wrapper('node', $entity);
+
+  $ewrapper->title->set($course_info['title']);
+
+  $my_body_content = $course_info['description'];
+  $ewrapper->body->set(array('value' => $my_body_content));
+  $ewrapper->body->summary->set($course_info['short_description']);
+  
+  /* set a bunch of other variables */
+  foreach ($course_info as $field=>$value) {
+    // if field not already set
+    // if field is actually an appropriate field of this content type
+    $ewrapper->$field->set($value);
+  }
+
+  // Entity API cannot set date field values so the 'old' method must
+  // be used
+/*
+  $my_date = new DateTime('January 1, 2013');
+  $entity->field_my_date[LANGUAGE_NONE][0] = array(
+     'value' => date_format($my_date, 'Y-m-d'),
+     'timezone' => 'UTC',
+     'timezone_db' => 'UTC',
+   );
+*/
+  $ewrapper->save(true);
+  entity_save('node', $entity);
+
+}
