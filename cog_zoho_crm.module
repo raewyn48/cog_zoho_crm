@@ -19,13 +19,22 @@ function cog_zoho_crm_help($path, $arg) {
 function cog_zoho_crm_menu() {
   $items = array();
   
-  $items['admin/commerce/cog_zoho_crm_import'] = array(
+  $items['admin/commerce/cog_zoho_crm'] = array(
+    'title' => 'Import Courses and Workshops',
+    'description' => 'Import new and updated data from Zoho CRM',
+//    'page callback' => 'cog_zoho_crm_import',
+    'access callback' => 'admin_landing_page_access',
+    'access arguments' => array('admin/commerce'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  $items['admin/commerce/cog_zoho_crm/import'] = array(
     'title' => 'Import Courses and Workshops',
     'description' => 'Import new and updated data from Zoho CRM',
     'page callback' => 'cog_zoho_crm_import',
     'access callback' => 'admin_landing_page_access',
     'access arguments' => array('admin/commerce'),
-    'type' => MENU_CALLBACK,
+    'type' => MENU_NORMAL_ITEM,
   );
   
   return $items;
